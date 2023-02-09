@@ -1,0 +1,74 @@
+## The following will generate calendar tokens for Google and Outlook.
+## For any issues please open an issue on GitHub - https://github.com/afraguela/marketo-velocity-tokens/issues
+## Based on Sanford's amazing Agical - https://blog.teknkl.com/introducing-agical-io-the-smarter-ics-file-generator/
+
+##01 - Setting variables
+#set($event_organizer   = "Your company name")
+#set($event_title       = "Name of your event")
+##IMPORTANT! FOR THE BELOW TO WORK MAKE SURE TO USE A CANONICAL https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+#set($event_timezone    = "Europe/London")  
+#set($event_start_date  = "2023-02-15") ##YYYY-MM-DD
+#set($event_start_time  = "13:00") ##24 hour format
+#set($event_end_date    = "2023-02-15") ##YYYY-MM-DD
+#set($event_end_time    = "16:00") ##24 hour format
+#set($event_reminder    = "15") ##Reminder of the event that pops up in someone's calendar
+#set($event_all_day     = false) ##true/false - used for events that span multiple days
+#set($event_location    = "Either enter the URL of the webinar lobby or actual physical address")
+#set($event_description = "Thank you for registering for ${event_title}.")         
+#set($event_agenda = "If you need an agenda, otherwise just delete the txt in this line inside the quotation marks")
+
+##DO NOT EDIT BELOW THIS LINE OR THE WORLD WILL END. I MEAN LITERALLY WILL END. YOU DON'T WANT THAT RIGHT? OK, GO ON THEN, I DARE YOU! 
+
+##Setting date and times correctly
+#set($locale = $date.getLocale())
+#set($timezone = $date.getTimeZone().getTimeZone("${event_timezone}"))
+
+##Create date objects from the strings above for start and end times
+#set($agical_start_date = $date.toDate("yyyy-MM-dd HH:mm", "${event_start_date} ${event_start_time}", $locale, $timezone)) ##Creates a date object from the string 
+#set($agical_end_date 	= $date.toDate("yyyy-MM-dd HH:mm", "${event_end_date} ${event_end_time}", $locale, $timezone)) ##Creates a date object from the string 
+
+##Format the date ready for AgiCal
+#set($agical_start_date = $date.format("yyyy-MM-dd'T'HH:mm:ssZ", $agical_start_date, $locale, $timezone)) ##Formats the date into something readable for AgiCal
+#set($agical_end_date 	= $date.format("yyyy-MM-dd'T'HH:mm:ssZ", $agical_end_date, $locale, $timezone)) ##Formats the date into something readable for AgiCal
+
+##Escaping the evils
+#set($event_title_gcal = $event_title.replace("&", "%26"))
+#set($event_title_gcal = $event_title_gcal.replace("+", "%2B"))
+#set($event_title_gcal = $event_title_gcal.replace("#", "%23"))
+#set($event_title_gcal = $esc.url($event_title_gcal))
+#set($event_title = $esc.url($event_title))
+#set($agical_start_date = $esc.url($agical_start_date))
+#set($agical_end_date 	= $esc.url($agical_end_date))
+#set($event_organizer	= $esc.url($event_organizer))
+#set($event_description_gcal = $event_description.replace("&", "%26"))
+#set($event_description_gcal = $event_description_gcal.replace("+", "%2B"))
+#set($event_description_gcal = $event_description_gcal.replace("#", "%23"))
+#set($event_description_gcal = $esc.url($event_description_gcal))
+#set($event_description = $esc.url($event_description))
+#set($event_location_gcal = $event_location.replace("&", "%26"))
+#set($event_location_gcal = $event_location_gcal.replace("+", "%2B"))
+#set($event_location_gcal = $event_location_gcal.replace("#", "%23"))
+#set($event_location_gcal = $esc.url($event_location_gcal))
+#set($event_reminder 	= $esc.url($event_reminder))
+#set($event_location = $event_location.replace(",", "\,"))
+#set($event_location = $esc.url($event_location))
+#set($event_agenda_outlook = $esc.url($event_agenda))
+#set($event_agenda_gcal = $event_agenda.replace("&", "%26"))
+#set($event_agenda_gcal = $event_agenda_gcal.replace("+", "%2B"))
+#set($event_agenda_gcal = $event_agenda_gcal.replace("#", "%23"))
+#set($event_agenda_gcal = $event_agenda_gcal.replaceAll("\n", "<BR>"))
+#set($event_agenda_gcal = $esc.url($event_agenda_gcal))
+#set($event_agenda_break = "<BR>")
+
+##Produce the wonderful AgiCal URLs
+#set($agical_url = "https://ics.agical.io/?subject=${event_title}&organizer=${event_organizer}&reminder=${event_reminder}&dtstart=${agical_start_date}&dtend=${agical_end_date}&attach=${event_location}&location=${event_location}&description=${event_description}${event_agenda_outlook}")
+#set($agical_url_gcal = "https://ics.agical.io/?subject=${event_title_gcal}&organizer=${event_organizer}&reminder=${event_reminder}&dtstart=${agical_start_date}&dtend=${agical_end_date}&attach=${event_location_gcal}&location=${event_location_gcal}&description=${event_description_gcal}${event_agenda_break}${event_agenda_gcal}&format=gcal")
+
+##All day and all night?
+#if($event_all_day == true)
+    #set($agical_url = "$agical_url&allday=1")
+    #set($agical_url_gcal = "$agical_url&allday=1")
+#end
+
+##Output the links
+<a href="${agical_url}" target="_blank" class="atc-outlook">Outlook</a> | <a href="${agical_url_gcal}" target="_blank" class="atc-gcal">Google Calendar</a>
